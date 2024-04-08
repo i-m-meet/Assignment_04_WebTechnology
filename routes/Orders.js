@@ -27,14 +27,29 @@ router.get('/:id', async (req, res) => {
 
 // POST a new order
 router.post('/', async (req, res) => {
-  const order = new Order({
-    userId: req.body.userId,
-    products: req.body.products, // products should be an array of { productId, quantity }
-    totalAmount: req.body.totalAmount,
-    // orderDate is set by default to the current date/time
-  });
+  const { userId, products, totalAmount } = req.body;
 
   try {
+    // Check if the userId exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    // Check if all productIds exist
+    for (const product of products) {
+      const existingProduct = await Product.findById(product.productId);
+      if (!existingProduct) {
+        return res.status(400).json({ message: `Invalid product ID: ${product.productId}` });
+      }
+    }
+
+    const order = new Order({
+      userId,
+      products,
+      totalAmount,
+    });
+
     const newOrder = await order.save();
     res.status(201).json(newOrder);
   } catch (err) {

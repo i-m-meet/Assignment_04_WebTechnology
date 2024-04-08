@@ -27,15 +27,29 @@ router.get('/:id', async (req, res) => {
 
 // POST a new comment
 router.post('/', async (req, res) => {
-  const comment = new Comment({
-    productId: req.body.productId,
-    userId: req.body.userId,
-    rating: req.body.rating,
-    image: req.body.image,
-    commentText: req.body.commentText,
-  });
+  const { productId, userId, rating, image, commentText } = req.body;
 
   try {
+    // Check if the userId exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    // Check if the productId exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(400).json({ message: 'Invalid product ID' });
+    }
+
+    const comment = new Comment({
+      productId,
+      userId,
+      rating,
+      image,
+      commentText,
+    });
+
     const newComment = await comment.save();
     res.status(201).json(newComment);
   } catch (err) {

@@ -27,16 +27,30 @@ router.get('/:userId', async (req, res) => {
 
 // POST a new cart or add products to existing cart
 router.post('/:userId', async (req, res) => {
+  const { userId, productId, quantity } = req.body;
+
   try {
-    let cart = await Cart.findOne({ userId: req.params.userId });
+    // Check if the userId exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    // Check if the productId exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(400).json({ message: 'Invalid product ID' });
+    }
+
+    let cart = await Cart.findOne({ userId });
     if (cart) {
       // Add new product to the existing cart
-      cart.products.push({ productId: req.body.productId, quantity: req.body.quantity });
+      cart.products.push({ productId, quantity });
     } else {
       // Create a new cart if one doesn't exist for the user
       cart = new Cart({
-        userId: req.params.userId,
-        products: [{ productId: req.body.productId, quantity: req.body.quantity }]
+        userId,
+        products: [{ productId, quantity }]
       });
     }
 
